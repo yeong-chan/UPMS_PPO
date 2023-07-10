@@ -16,7 +16,7 @@ if __name__ == "__main__":
     random.seed(42)
     #writer = SummaryWriter()
     cfg = get_cfg()
-    #vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
+    vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
 
     lr = cfg.lr
     gamma = cfg.gamma
@@ -82,15 +82,7 @@ if __name__ == "__main__":
             update_step += 1
             avg_loss += agent.train()
         agent.scheduler.step()
-        rewards_list.append(r_epi)
-        moving_average_duration = 80
-        # if e % 100 == 0:
-        #     if len(rewards_list) >= moving_average_duration:
-        #         moving_average = [np.mean(rewards_list[i:i+moving_average_duration]) for i in range(0, len(rewards_list)-moving_average_duration)]
-        #         r_df = pd.DataFrame(rewards_list)
-        #         me_df = pd.DataFrame(moving_average)
-        #         r_df.to_csv('r_df_min_{}_max_{}_action_size_{}.csv'.format(range_min, range_max, action_size))
-        #         me_df.to_csv('me_df_min_{}_max_{}_action_size_{}.csv'.format(range_min, range_max, action_size))
+        vessl.log(step=e, payload={'reward': np.mean(r_epi)})
         print(e, r_epi)
         if e % 100 == 0:
             agent.save_network(e, model_dir)
