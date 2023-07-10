@@ -16,7 +16,7 @@ if __name__ == "__main__":
     random.seed(42)
     #writer = SummaryWriter()
     cfg = get_cfg()
-    #vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
+    vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
 
     lr = cfg.lr
     gamma = cfg.gamma
@@ -82,6 +82,7 @@ if __name__ == "__main__":
             update_step += 1
             avg_loss += agent.train()
         agent.scheduler.step()
+        vessl.log(step=e, payload={'reward': np.mean(r_epi)})
         rewards_list.append(r_epi)
         moving_average_duration = 80
         # if e % 100 == 0:
