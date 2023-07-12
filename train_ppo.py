@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
 
 
-    model_dir = 'output/train/model/'
+    model_dir = '/output/'
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
