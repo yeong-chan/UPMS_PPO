@@ -112,10 +112,14 @@ class Agent:
             done_mask = 0 if done else 1
             done_lst.append([done_mask])
 
-        s, a, r, s_prime, prob_a, mask, done = torch.tensor(s_lst, dtype=torch.float).to(device), torch.tensor(a_lst).to(device), \
-                                               torch.tensor(r_lst, dtype=torch.float).to(device), torch.tensor(s_prime_lst, dtype=torch.float).to(device), \
-                                               torch.tensor(prob_a_lst).to(device), torch.tensor(mask_lst).to(device), torch.tensor(done_lst, dtype=torch.float).to(device)
-
+        s = torch.tensor(np.array(s_lst), dtype=torch.float32, device=device)
+        a = torch.tensor(np.array(a_lst), dtype=torch.int64, device=device)
+        r = torch.tensor(np.array(r_lst), dtype=torch.float32, device=device)
+        s_prime = torch.tensor(np.array(s_prime_lst), dtype=torch.float32, device=device)
+        prob_a = torch.tensor(np.array(prob_a_lst), device=device)
+        mask = torch.tensor(np.array(mask_lst), device=device)
+        done = torch.tensor(np.array(done_lst), dtype=torch.float32, device=device)
+        
         self.data = []
         return s, a, r, s_prime, prob_a, mask, done
 
