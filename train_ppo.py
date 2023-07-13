@@ -16,7 +16,7 @@ if __name__ == "__main__":
     random.seed(42)
     #writer = SummaryWriter()
     cfg = get_cfg()
-    vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
+    #vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
 
     lr = cfg.lr
     gamma = cfg.gamma
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
 
 
-    model_dir = '/output/'
+    model_dir = 'output/train/model/'
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
@@ -47,14 +47,12 @@ if __name__ == "__main__":
         os.makedirs(event_path)
     range_min = 0.1
     range_max = 4
-    env = UPMSP(log_dir=event_path, num_j=1000, num_m=8, action_number=action_size, action_mode='heuristc', min = range_min, max = range_max)
-    # env = UPMSP(log_dir=event_path, num_j=1000,num_m=8, action_number = action_size, min = 0.01, max = 2.1, action_mode = 'WCOVERT')         # 환경을 설정하기 위한 파라미터
+    env = UPMSP(log_dir=event_path, num_j=1000, num_m=8, action_number=action_size, action_mode='heuristic', min = range_min, max = range_max)
     agent = Agent(state_size, action_size, lr, gamma, lmbda, eps_clip, K_epoch)
 
 
     # agent.network.load_state_dict(torch.load('output/train/model/episode6400.pt')["model_state_dict"])
     # agent.optimizer.load_state_dict(torch.load('output/train/model/episode6400.pt')["optimizer_state_dict"])
-    #
     # k = 6950
     k = 1
 
@@ -82,7 +80,6 @@ if __name__ == "__main__":
             update_step += 1
             avg_loss += agent.train()
         agent.scheduler.step()
-        vessl.log(step=e, payload={'reward': np.mean(r_epi)})
         rewards_list.append(r_epi)
         moving_average_duration = 80
         # if e % 100 == 0:
