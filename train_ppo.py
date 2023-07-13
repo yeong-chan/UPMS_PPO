@@ -47,7 +47,7 @@ if __name__ == "__main__":
         os.makedirs(event_path)
     range_min = 0.1
     range_max = 4
-    env = UPMSP(log_dir=event_path, num_j=1000, num_m=8, action_number=action_size, action_mode='WCOVERT', min = range_min, max = range_max)
+    env = UPMSP(log_dir=event_path, num_j=1000, num_m=8, action_number=action_size, action_mode='heuristc', min = range_min, max = range_max)
     # env = UPMSP(log_dir=event_path, num_j=1000,num_m=8, action_number = action_size, min = 0.01, max = 2.1, action_mode = 'WCOVERT')         # 환경을 설정하기 위한 파라미터
     agent = Agent(state_size, action_size, lr, gamma, lmbda, eps_clip, K_epoch)
 
