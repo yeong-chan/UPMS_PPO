@@ -4,6 +4,8 @@ def get_cfg():
 
     parser = argparse.ArgumentParser(description="")
 
+    parser.add_argument("--n_job", type=int, default=1000, help="number of job")
+    
     parser.add_argument("--n_episode", type=int, default=1000000, help="number of episodes")
     parser.add_argument("--lr", type=float, default=1e-4, help="learning rate")
     parser.add_argument("--gamma", type=float, default=0.99, help="discount ratio")
