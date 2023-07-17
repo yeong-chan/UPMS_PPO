@@ -17,9 +17,6 @@ class Job:
         self.past = 0
         self.sink_just = True
 
-
-
-
 class Source:
     def __init__(self, name, env, routing, monitor, jt_dict, p_j, K, machine_num):
         self.env = env
@@ -164,6 +161,13 @@ class Routing:
                                         machine="Machine {0}".format(next_machine))
                     self.process_dict["Machine {0}".format(next_machine)].queue.put(job)
 
+                elif self.action_mode == "ATC":
+                    next_machine = yield self.env.process(self.ATC(location=location, idle=machine_idle, job=job,
+                                                                       h=routing_rule))
+                    self.monitor.record(time=self.env.now, jobtype=job.job_type, event="Routing Finish", job=job.name,
+                                        machine="Machine {0}".format(next_machine))
+                    self.process_dict["Machine {0}".format(next_machine)].queue.put(job)
+
                 # else:
 
 
@@ -187,8 +191,10 @@ class Routing:
                           next_job = yield self.env.process(self.ATC(location=location, idle=machine_idle))
                     elif routing_rule == "WCOVERT":
                         next_job = yield self.env.process(self.WCOVERT(location=location))
-                if self.action_mode == 'WCOVERT':
+                elif self.action_mode == 'WCOVERT':
                     next_job = yield self.env.process(self.WCOVERT(location=location, k_t = routing_rule))
+                elif self.action_mode == 'ATC':
+                    next_job = yield self.env.process(self.ATC(location=location, h = routing_rule))
 
                 self.monitor.record(time=self.env.now, jobtype=next_job.job_type, event="Routing Finish",
                                     job=next_job.name, machine=location)
@@ -366,10 +372,6 @@ class Sink:
         self.finished_job = 0
 
         self.job_list = list()
-        ######### for state feature 9 #####################
-        self.tardiness_jt = {}
-        self.tardiness_jt_cnt = {}
-        ###################################################
 
     def put(self, job):
         self.finished["JobType {0}".format(job.job_type)] += 1  # jobtype 별 종료 개수
@@ -385,14 +387,6 @@ class Sink:
         self.job_list.append(job)
 
         self.monitor.tardiness += self.weight[job.job_type] * min(0, job.due_date - self.env.now)
-        ####################### for state feature 9 ################################
-        # if job.job_type not in list(self.tardiness_jt.keys()):
-        #     self.tardiness_jt[job.job_type] = min(0, job.due_date - self.env.now)
-        #     self.tardiness_jt_cnt[job.job_type] = 1
-        # else:
-        #     self.tardiness_jt[job.job_type] += min(0, job.due_date - self.env.now)
-        #     self.tardiness_jt_cnt[job.job_type] += 1
-        #############################################################################
 
 class Monitor:
     def __init__(self, filepath):
