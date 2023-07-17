@@ -22,7 +22,11 @@ class UPMSP:
         self.action_mode = action_mode
         if action_mode == 'heuristic':
             self.mapping = {0: "WSPT", 1: "WMDD", 2: "ATC", 3: "WCOVERT"}
-        else: # WCOVERT PPO
+        elif action_mode == 'WCOVERT': # WCOVERT PPO
+            self.mapping = {}
+            for i in range(0, action_number):
+                self.mapping[i] = min+(i+1)*(max-min)/action_number
+        elif action_mode == 'ATC': # ATC PPO
             self.mapping = {}
             for i in range(0, action_number):
                 self.mapping[i] = min+(i+1)*(max-min)/action_number
