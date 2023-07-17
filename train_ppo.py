@@ -8,8 +8,6 @@ from cfg import get_cfg
 from agent.ppo import *
 import random
 
-
-
 if __name__ == "__main__":
     torch.manual_seed(42)
     np.random.seed(42)
@@ -29,10 +27,8 @@ if __name__ == "__main__":
     w_move = cfg.w_move
     w_priority = cfg.w_priority
     state_size = 104        # feature 1~8 size = 104 / 176
-    action_size = 4
+    action_size = 12
     # rewards_list = list()
-
-
 
     model_dir = '/output/'
     if not os.path.exists(model_dir):
@@ -47,21 +43,12 @@ if __name__ == "__main__":
         os.makedirs(event_path)
     range_min = 0.1
     range_max = 4
-    env = UPMSP(log_dir=event_path, num_j=1000, num_m=8, action_number=action_size, action_mode='heuristic', min = range_min, max = range_max)
+    env = UPMSP(log_dir=event_path, num_j=1000, num_m=8, action_number=action_size, action_mode='ATC', min = range_min, max = range_max)
     agent = Agent(state_size, action_size, lr, gamma, lmbda, eps_clip, K_epoch)
 
-
-    # agent.network.load_state_dict(torch.load('output/train/model/episode6400.pt')["model_state_dict"])
-    # agent.optimizer.load_state_dict(torch.load('output/train/model/episode6400.pt')["optimizer_state_dict"])
-    # k = 6950
-    k = 1
-
-    # writer = SummaryWriter(log_dir)
     possible_actions = [True] * action_size
 
-    for e in range(k, cfg.n_episode + 1):
-
-
+    for e in range(1, cfg.n_episode + 1):
         s = env.reset()
         update_step = 0
         r_epi = 0.0
