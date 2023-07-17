@@ -16,6 +16,7 @@ if __name__ == "__main__":
     cfg = get_cfg()
     vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
 
+    mode = cfg.mode
     lr = cfg.lr
     gamma = cfg.gamma
     lmbda = cfg.lmbda
