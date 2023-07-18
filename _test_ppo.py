@@ -16,7 +16,9 @@ if __name__ == "__main__":
     episode = 1
     score_avg = 0
     state_size =104
-    action_size = 4
+    action_size = 12
+
+    mode = cfg.mode
     lr = cfg.lr
     gamma = cfg.gamma
     lmbda = cfg.lmbda
@@ -36,14 +38,9 @@ if __name__ == "__main__":
     if not os.path.exists(event_path):
         os.makedirs(event_path)
 
-    #env = UPMSP(log_dir=event_path, num_j=1500,num_m=8, action_number = action_size, action_mode = 'WCOVERT')
-    env = UPMSP(log_dir=event_path, num_j=cfg.n_job, num_m=8, action_number=action_size, min=0.1, max=4, action_mode='heuristic')  # action_mode 바꿔야 함 heuristic, WCOVERT
+    env = UPMSP(log_dir=event_path, num_j=cfg.n_job, num_m=8, action_number=action_size, min=0.1, max=4, action_mode=mode)  # action_mode 바꿔야 함 heuristic, WCOVERT
     agent = Agent(state_size, action_size, lr, gamma, lmbda, eps_clip, K_epoch)
-    #agent.network.load_state_dict(torch.load('output/train/model/episode6400.pt')["model_state_dict"])
-    agent.network.load_state_dict(torch.load('/root/UPMS_PPO/episode6200.pt')["model_state_dict"])
-
-    # q = Qnet(state_size, action_size)
-    # q.load_state_dict(torch.load(log_path + '/episode5000.pt')["model_state_dict"])       # 가중치가 저장되는 경로
+    agent.network.load_state_dict(torch.load('/root/UPMS_PPO/episode4800_atc_ppo12.pt')["model_state_dict"])
 
     tard_list = list()
     #print(num_episode)
