@@ -14,7 +14,7 @@ if __name__ == "__main__":
     torch.manual_seed(42)
     np.random.seed(42)
     random.seed(42)
-    num_episode = 30
+    num_episode = cfg.n_episode
     episode = 1
     score_avg = 0
     state_size =104
