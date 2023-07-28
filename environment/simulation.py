@@ -55,13 +55,24 @@ class Source:
                                 queue=len(self.routing.queue.items))
             self.routing.created += 1
             self.env.process(self.routing.run(location="Source"))
+            # print("{}, {}".format(job.name,job.due_date))
 
     def _cal_iat(self):
         total_p_j = np.sum(self.total_p_j)
-        lambda_u = 2 * self.machine_num / (total_p_j - 1)
-        arrival_rate = list(np.random.uniform(1, lambda_u, size=self.len_jobs))
-        iat_list = [1/ar for ar in arrival_rate]
-        return iat_list
+        k = 0.001
+        lambda_u = 2 * self.machine_num / total_p_j - k #- 1 # 0.8 ~ 16
+        # arrival_rate = list(np.random.uniform(0.1, lambda_u, size=self.len_jobs))
+        arrival_rate = np.random.uniform(k, lambda_u, self.len_jobs)
+
+        iat_list = [np.random.exponential(1/ar) for ar in arrival_rate]
+
+        lambda_u = self.machine_num / np.mean(self.total_p_j) / 10
+        iat_list = np.random.exponential(1/lambda_u, self.len_jobs)
+        #iat_list = np.random.uniform(1/arrival_rate-0.1, 1/arrival_rate+0.1, self.len_jobs)
+        #iat_list = [5]*self.len_jobs
+        # print("{}, {}".format(len(iat_list), np.mean(iat_list)))
+
+        return iat_list.tolist()
 
 
 class Process:
@@ -122,6 +133,7 @@ class Routing:
 
         self.idle = False
         self.job = None
+
 
         #self.mapping = {0: "WSPT", 1: "WMDD", 2: "ATC", 3: "WCOVERT"}
 
@@ -206,7 +218,6 @@ class Routing:
             min_processing_time = 1e10
             min_machine_idx = None
             jt = job.job_type
-
             for idx in range(len(idle)):
                 if idle[idx]:
                     wpt = job.processing_time[idx] / self.weight[jt]
@@ -235,17 +246,21 @@ class Routing:
 
     def WMDD(self, location="Source", idle=None, job=None):
         if location == "Source":  # job -> machine 선택 => output : machine index
-            min_wdd = 1e10
-            min_machine_idx = None
-            jt = job.job_type
-
+            # min_wdd = 1e10
+            # min_machine_idx = None
+            # jt = job.job_type
+            # for idx in range(len(idle)):
+            #     if idle[idx]:
+            #         wdd = max(job.processing_time[idx], job.due_date - self.env.now) / self.weight[jt]
+            #         if wdd < min_wdd:
+            #             min_wdd = wdd
+            #             min_machine_idx = idx
+            min_p = 1e10
             for idx in range(len(idle)):
                 if idle[idx]:
-                    wdd = max(job.processing_time[idx], job.due_date - self.env.now) / self.weight[jt]
-                    if wdd < min_wdd:
-                        min_wdd = wdd
+                    if min_p > job.processing_time[idx]:
                         min_machine_idx = idx
-
+                        min_p = job.processing_time[idx]
             return min_machine_idx
 
         else:  # machine -> job 선택 => output : job
@@ -265,78 +280,84 @@ class Routing:
 
             return next_job
 
-    def ATC(self, location="Source", idle=None, job=None, h = 1):
+    def ATC(self, location="Source", idle=None, job=None, h = 9.5):
         p_temp = []
-        if self.queue.items is not None:
+        if len(self.queue.items) != 0:
             for wj in list(self.queue.items):
                 p_temp.append(np.average(wj.processing_time))
-        p = 0 if p_temp is None or len(p_temp) == 0 else np.average(p_temp)  # p 충분히 크면 ATC==WSPT
+        else: # job 하나 뿐인 경우
+            pass
+        # if job in self.queue.items:
+        #     print("@@@@@@@@@@@@@@@@@@@@@@@@")
         if location == "Source":  # job -> machine 선택 => output : machine index
+            p = np.average(job.processing_time)
+
             max_wa = -1
             max_machine_idx = None
             jt = job.job_type
-            non_processed_job = self.source_dict["Source {0}".format(jt)].jobs # waiting jobs of JT
-            temp = list()
+            # non_processed_job = self.source_dict["Source {0}".format(jt)].jobs # waiting jobs of JT
+            # temp = list()
             for idx in range(len(idle)):
                 if idle[idx]:
                     p_ij = job.processing_time[idx]
-                    if len(non_processed_job) > 0: # X
+                    # if len(non_processed_job) > 0: # X
                         # p = np.average([non_job.processing_time[idx] for non_job in non_processed_job]) #??????
-                        wa = self.weight[jt] / p_ij * np.exp(-(max(job.due_date - p_ij - self.env.now, 0) / (h * p))) \
-                            if p > 0 else 0
-                        if wa > max_wa:
-                            max_wa = wa
-                            max_machine_idx = idx
-                    else: # X
-                        print("else: len(non_processed_job) <= 0")
-                        temp.append(idx)
+                    wa = self.weight[jt] / p_ij * np.exp(-(max(job.due_date - p_ij - self.env.now, 0) / (h * p))) \
+                        if p > 0 else 0
+                    if wa > max_wa:
+                        max_wa = wa
+                        max_machine_idx = idx
+                    # else: # X
+                    #     #print("else: len(non_processed_job) <= 0, {}".format(p))
+                    #     temp.append(idx)
 
 
-            if len(temp) > 0: # X
-                print("error")
-                max_machine_idx = random.choice(temp)
+            # if len(temp) > 0: # X
+            #     print("error")
+            #     max_machine_idx = random.choice(temp)
 
             return max_machine_idx
 
         else:  # machine(location) -> job 선택 => output : job # idle is None
+            p = np.mean(p_temp)
+
             job_list = list(copy.deepcopy(self.queue.items))
             max_wa = -1
             max_job_name = None
 
             for job_q in job_list:
                 jt = job_q.job_type
-
-                # p = np.average([non_job.processing_time[int(location[-1])] for non_job in non_processed_job])
                 wa = self.weight[jt] / job_q.processing_time[int(location[-1])] * np.exp(
                     -(max(job_q.due_date - job_q.processing_time[int(location[-1])] - self.env.now, 0) / (h * p))) \
                     if p > 0 else 0
-
                 if wa > max_wa:
                     max_wa = wa
                     max_job_name = job_q.name
-            # if max_job_name is None:
-            #     print("errorrrrrrrrrrrrrrrr")
-            #     max_job_name = random.choice(temp)
             next_job = yield self.queue.get(lambda x: x.name == max_job_name)
             return next_job
 
-    def WCOVERT(self, location="Source", idle=None, job=None, k_t = 14.5):
+    def WCOVERT(self, location="Source", idle=None, job=None, k_t = 14.5): # 14.5 였음
         if location == "Source":  # job -> machine 선택 => output : machine index
-            max_wt = -1
-            max_machine_idx = None
-            jt = job.job_type
+            # max_wt = -1
+            # max_machine_idx = None
+            # jt = job.job_type
+            # for idx in range(len(idle)):
+            #     if idle[idx]:
+            #         p_ij = job.processing_time[idx]
+            #         temp_wt = max(job.due_date - p_ij - self.env.now, 0) / (k_t * p_ij)
+            #         temp_wt = max(1 - temp_wt, 0)
+            #         wt = self.weight[jt] / p_ij * temp_wt
+            #
+            #         if wt > max_wt:
+            #             max_wt = wt
+            #             max_machine_idx = idx
+            min_p = 1e10
             for idx in range(len(idle)):
                 if idle[idx]:
-                    p_ij = job.processing_time[idx]
-                    temp_wt = max(job.due_date - p_ij - self.env.now, 0) / (k_t * p_ij)
-                    temp_wt = max(1 - temp_wt, 0)
-                    wt = self.weight[jt] / p_ij * temp_wt
-
-                    if wt > max_wt:
-                        max_wt = wt
-                        max_machine_idx = idx
-
-            return max_machine_idx
+                    if min_p > job.processing_time[idx]:
+                        min_machine_idx = idx
+                        min_p = job.processing_time[idx]
+            return min_machine_idx
 
         else:  # machine -> job 선택 => output : job
             job_list = list(copy.deepcopy(self.queue.items))
@@ -356,6 +377,8 @@ class Routing:
 
             return next_job
 
+    def RAND(self, location="Source", idle=None, job=None):
+        return
 
 class Sink:
     def __init__(self, env, monitor, jt_dict, end_num, source_dict, weight):
@@ -387,6 +410,7 @@ class Sink:
         self.job_list.append(job)
 
         self.monitor.tardiness += self.weight[job.job_type] * min(0, job.due_date - self.env.now)
+
 
 class Monitor:
     def __init__(self, filepath):
