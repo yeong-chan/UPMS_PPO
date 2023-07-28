@@ -28,6 +28,7 @@ if __name__ == "__main__":
     lr = cfg.lr
     gamma = cfg.gamma
     lmbda = cfg.lmbda
+    n_job = cfg.n_job
     eps_clip = cfg.eps_clip
     K_epoch = cfg.K_epoch
     T_horizon = cfg.T_horizon
@@ -45,7 +46,7 @@ if __name__ == "__main__":
         os.makedirs(event_path)
 
     #env = UPMSP(log_dir=event_path, num_j=1500,num_m=8, action_number = action_size, action_mode = 'WCOVERT')
-    env = UPMSP(log_dir=event_path, num_j=800, num_m=8, action_number=action_size, min=0.1, max=4, action_mode=mode)  # action_mode 바꿔야 함 heuristic, WCOVERT
+    env = UPMSP(log_dir=event_path, num_j=n_job, num_m=8, action_number=action_size, min=0.1, max=4, action_mode=mode)  # action_mode 바꿔야 함 heuristic, WCOVERT
     agent = Agent(state_size, action_size, lr, gamma, lmbda, eps_clip, K_epoch)
     #agent.network.load_state_dict(torch.load('../result/model/dqn/episode8000.pt')["model_state_dict"])    # WCOVERT PPO
     # agent.network.load_state_dict(torch.load('../result/model/ppo/episode6200.pt')["model_state_dict"])   # heuristic PPO
