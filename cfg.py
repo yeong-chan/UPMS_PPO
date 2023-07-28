@@ -4,7 +4,7 @@ def get_cfg():
 
     parser = argparse.ArgumentParser(description="")
 
-    parser.add_argument("--mode", type=str, default='ATC', help="action mode")
+    parser.add_argument("--mode", type=str, default='heuristic', help="action mode")
     parser.add_argument("--n_job", type=int, default=1000, help="number of job")
     
     parser.add_argument("--n_episode", type=int, default=1000000, help="number of episodes")
