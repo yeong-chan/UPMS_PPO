@@ -1,6 +1,4 @@
 
-
-
 import numpy as np
 from environment.simulation import *
 
@@ -10,6 +8,10 @@ class UPMSP:
         self.num_machine = num_m
         self.jobtypes = [i for i in range(num_jt)]  # 1~10
         self.p_ij, self.p_j, self.weight = self._generating_data()
+
+        # print(self.p_ij)
+        # print(self.weight)
+
         self.num_job = num_j
         self.log_dir = log_dir
         self.jobtype_assigned = list()  # 어느 job이 어느 jobtype에 할당되는 지
@@ -21,15 +23,16 @@ class UPMSP:
         self.time = 0
         self.action_mode = action_mode
         if action_mode == 'heuristic':
-            self.mapping = {0: "WSPT", 1: "WMDD", 2: "ATC", 3: "WCOVERT"}
-        elif action_mode == 'WCOVERT': # WCOVERT PPO
+            # self.mapping = {0: "WSPT", 1: "WMDD", 2: "ATC", 3: "WCOVERT"}
+            self.mapping = {0: "WSPT", 1: "ATC", 2: "WCOVERT"}
+        elif action_mode == 'WCOVERT':  # WCOVERT PPO
             self.mapping = {}
             for i in range(0, action_number):
-                self.mapping[i] = min+(i+1)*(max-min)/action_number
+                self.mapping[i] = min + (i +1) * (max - min) / action_number
         elif action_mode == 'ATC': # ATC PPO
             self.mapping = {}
             for i in range(0, action_number):
-                self.mapping[i] = min+(i+1)*(max-min)/action_number
+                self.mapping[i] = min + (i + 1) * (max - min) / action_number
         self.sim_env, self.process_dict, self.source_dict, self.sink, self.routing, self.monitor = self._modeling()
         # self.one_hot_enc = np.eye(self.num_job)
         # self.tardiness_jt = [0]*self.num_jt
@@ -70,6 +73,10 @@ class UPMSP:
     def reset(self):
         self.e = self.e + 1 if self.e > 1 else 1  # episode
         self.p_ij, self.p_j, self.weight = self._generating_data()
+
+        # print(self.p_ij)
+        # print(self.weight)
+
         self.sim_env, self.process_dict, self.source_dict, self.sink, self.routing, self.monitor = self._modeling()
         self.done = False
         self.monitor.reset()
@@ -88,7 +95,7 @@ class UPMSP:
     def _modeling(self):
         env = simpy.Environment()
 
-        monitor = Monitor(self.log_dir + '/log_%d.csv'% self.e)
+        monitor = Monitor(self.log_dir + '/log_%d.csv '% self.e)
         # monitor = Monitor("C:/Users/sohyon/PycharmProjects/UPJSP_SH/environment/result/log_{0}.csv".format(self.e))
         process_dict = dict()
         source_dict = dict()
@@ -100,7 +107,7 @@ class UPMSP:
         routing.action_mode = self.action_mode
         #############################################
         # 0에서 9까지 랜덤으로 배정
-        self.jobtype_assigned = np.random.randint(low=0, high=10, size=self.num_job)
+        self.jobtype_assigned = np.random.randint(low=0, high=self.num_jt, size=self.num_job)
         for i in range(self.num_job):
             jt = self.jobtype_assigned[i]
             if "JobType {0}".format(jt) not in jt_dict.keys():
@@ -324,22 +331,21 @@ class UPMSP:
     def _calculate_reward(self, mode= 'graph'):
         if mode == 'graph':
             reward = 0
-            scaling_factor = 1/250
+            scaling_factor = 1/ 250
             now = copy.deepcopy(self.sim_env.now)
+            ### job before process ###
             for job in self.routing.queue.items:
                 jt = job.job_type
                 w_j = self.weight[jt]
-
                 if now < job.due_date:
                     reward += 0
                 else:
-                    reward += -(now-job.past)* w_j * scaling_factor
-                    #self.num_jt[jt] += (now-job.past)
+                    reward += -(now - job.past) * w_j * scaling_factor
                 job.past = now
-
+            ### job processing ###
             for i in range(self.num_machine):
                 machine = self.process_dict["Machine {0}".format(i)]
-                if machine.idle != True:
+                if not machine.idle:
                     job = machine.job
                     jt = job.job_type
                     w_j = self.weight[jt]
@@ -347,20 +353,18 @@ class UPMSP:
                         reward += 0
                     else:
                         reward += -(now - job.past) * w_j * scaling_factor
-                        #self.num_jt[jt] += (now - job.past)
                     job.past = now
                 else:
                     pass
-            finished_jobs = self.sink.job_list
-            for job in finished_jobs:
-                if job.sink_just == True:
+            ### job after process ###
+            for job in self.sink.job_list:
+                if job.sink_just:
                     jt = job.job_type
                     w_j = self.weight[jt]
                     if now < job.due_date:
                         reward += 0
                     else:
                         reward += -(now - job.past) * w_j * scaling_factor
-                        #self.num_jt[jt] += (now - job.past)
                     job.past = now
                     job.sink_just = False
                 else:
@@ -375,16 +379,13 @@ class UPMSP:
         #         w_j = self.weight[jt]
         #         tardiness = min(job.due_date - job.completion_time, 0)
         #         reward += w_j * tardiness * (1/1000)
-
-            self.sink.job_list = list()
-
-        return reward
+        #     self.sink.job_list = list()
+        # return reward
 
     def _generating_data(self):
-        processing_time = [[np.random.uniform(low=1, high=20) for _ in range(self.num_machine)] for _ in range(self.num_jt)]
+        processing_time = [[np.random.uniform(low=1, high=20) for _ in range(self.num_machine)] for _ in
+                           range(self.num_jt)]
         p_j = [np.mean(jt_pt) for jt_pt in processing_time]
         weight = list(np.random.uniform(low=0, high=5, size=self.num_jt))
 
         return processing_time, p_j, weight
-
-
