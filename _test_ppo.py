@@ -6,8 +6,6 @@ import random
 
 import vessl
 from torch.utils.tensorboard import SummaryWriter
-from cfg import get_cfg
-
 from agent.ppo import *
 from environment.env import UPMSP
 
@@ -15,7 +13,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 
 if __name__ == "__main__":
     writer = SummaryWriter()
-    vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
+    vessl.init()
 
     cfg = get_cfg()
     torch.manual_seed(42)
