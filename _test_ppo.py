@@ -95,7 +95,7 @@ if __name__ == "__main__":
             tard_list.append(mean_wt)
             print("{} {}".format(i+1, -mean_wt))
             vessl.log(step=i+1, payload={'MWT': np.mean(-mean_wt)})
-            file.write(-mean_wt)
+            file.write(str(-mean_wt)+'\n')
             # print("Episode {0} | MWT = {1} | CUM_MWT = {2}".format(i+1, -mean_wt, -np.mean(tard_list)))
     
         print("Total Mean Weighted Tardiness = ", np.mean(tard_list))
