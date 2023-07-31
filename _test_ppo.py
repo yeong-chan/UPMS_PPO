@@ -10,6 +10,9 @@ from environment.env import UPMSP
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 if __name__ == "__main__":
+    writer = SummaryWriter()
+    vessl.init(organization="snu-eng-dgx", project="Quay", hp=cfg)
+
     cfg = get_cfg()
     torch.manual_seed(42)
     np.random.seed(42)
@@ -62,32 +65,35 @@ if __name__ == "__main__":
     np.random.seed(42)
     random.seed(42)
     #print(num_episode)
-    for i in range(num_episode):
-        env.e = i
-        step = 0
-        done = False
-        s = env.reset()
-        r = list()
-        possible_actions = [True] * action_size
-        while not done:
-            epsilon = 0
-            step += 1
-            #a = 2   # 0: "WSPT", 1: "WMDD", 2: "ATC", 3: "WCOVERT"
-            a, prob, mask = agent.get_action(s, possible_actions)
-
-            # 환경과 연결
-            next_state, reward, done = env.step(a)
-
-            r.append(reward)
-            s = next_state
-
-            if done:
-                env.monitor.save_tracer()
-                break
-
-        mean_wt = env.monitor.tardiness / env.num_job
-        tard_list.append(mean_wt)
-        print("{}".format(-mean_wt))
-        # print("Episode {0} | MWT = {1} | CUM_MWT = {2}".format(i+1, -mean_wt, -np.mean(tard_list)))
-
-    print("Total Mean Weighted Tardiness = ", np.mean(tard_list))
+    with open("/output/output.txt", "w") as file:
+        for i in range(num_episode):
+            env.e = i
+            step = 0
+            done = False
+            s = env.reset()
+            r = list()
+            possible_actions = [True] * action_size
+            while not done:
+                epsilon = 0
+                step += 1
+                #a = 2   # 0: "WSPT", 1: "WMDD", 2: "ATC", 3: "WCOVERT"
+                a, prob, mask = agent.get_action(s, possible_actions)
+    
+                # 환경과 연결
+                next_state, reward, done = env.step(a)
+    
+                r.append(reward)
+                s = next_state
+    
+                if done:
+                    env.monitor.save_tracer()
+                    break
+    
+            mean_wt = env.monitor.tardiness / env.num_job
+            tard_list.append(mean_wt)
+            print("{} {}".format(i+1, -mean_wt))
+            vessl.log(step=e, payload={'MWT': np.mean(-mean_wt)})
+            file.write(-mean_wt)
+            # print("Episode {0} | MWT = {1} | CUM_MWT = {2}".format(i+1, -mean_wt, -np.mean(tard_list)))
+    
+        print("Total Mean Weighted Tardiness = ", np.mean(tard_list))
