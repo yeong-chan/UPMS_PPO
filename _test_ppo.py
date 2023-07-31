@@ -94,7 +94,7 @@ if __name__ == "__main__":
             mean_wt = env.monitor.tardiness / env.num_job
             tard_list.append(mean_wt)
             print("{} {}".format(i+1, -mean_wt))
-            vessl.log(step=e, payload={'MWT': np.mean(-mean_wt)})
+            vessl.log(step=i+1, payload={'MWT': np.mean(-mean_wt)})
             file.write(-mean_wt)
             # print("Episode {0} | MWT = {1} | CUM_MWT = {2}".format(i+1, -mean_wt, -np.mean(tard_list)))
     
